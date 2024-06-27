@@ -23,6 +23,14 @@
       width: 300px;
       text-align: center;
     }
+    .back-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+    }
+    .container h3{
+        font-size: 1rem;
+    }
     button {
       padding: 10px;
       margin: 10px 0;
@@ -40,11 +48,24 @@
   </style>
 </head>
 <body>
+  <div class="back-button">
+    <button onclick="logout()">Logout</button>
+  </div>
   <div class="container">
     <h2>Admin Dashboard</h2>
+    <h3>Select which feature you wish to access</h3>
     <button onclick="window.location.href='export_asn.html'">Export ASN</button>
     <button onclick="window.location.href='register.html'">Register User</button>
     <button onclick="window.location.href='barcodes.html'">Scan Barcodes</button>
+    <button onclick="window.location.href='import_po.html'">Import PO</button>
+    <button onclick="window.location.href='view_po_status.html'">View PO Status</button>
   </div>
+  <script>
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      window.location.href = 'index.html';
+    }
+  </script>
 </body>
 </html>
