@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Barcode Scanner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+      position: relative;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 300px;
+      text-align: center;
+    }
+    .back-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+    }
+    select, input, button {
+      padding: 10px;
+      margin: 10px 0;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #fff;
+      border-radius: 5px;
+      padding: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+    }
+
+    .toast.success {
+      background-color: #c6efce;
+      color: #2e865f;
+    }
+
+    .toast.error {
+      background-color: #f7cac9;
+      color: #e74c3c;
+    }
+  </style>
+</head>
+<body>
+  <div class="back-button" id="backButton" style="display: none;">
+    <button onclick="goBackToDashboard()">Back to Dashboard</button>
+  </div>
+  <div class="container">
+    <h2>Barcode Scanner</h2>
+    <select id="poNumberSelect"></select>
+    <select id="shipmentIdSelect"></select>
+    <input type="text" id="gtin" placeholder="GTIN" required>
+    <input type="text" id="sscc" placeholder="SSCC" required>
+    <button onclick="scanBarcode()">Submit</button>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role'); // Assuming role is stored in localStorage
+        if (role === 'admin') {
+          document.getElementById('backButton').style.display = 'block';
+        }
+
+        const [poResponse, shipmentResponse] = await Promise.all([
+          fetch('http://localhost:8080/api/getPONumbers', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }),
+          fetch('http://localhost:8080/api/getShipmentIDs', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+        ]);
+
+        if (!poResponse.ok || !shipmentResponse.ok) {
+          throw new Error('Failed to fetch PO numbers or Shipment IDs');
+        }
+
+        const poNumbers = await poResponse.json();
+        const shipmentIDs = await shipmentResponse.json();
+
+        const poSelect = document.getElementById('poNumberSelect');
+        poNumbers.forEach(po => {
+          const option = document.createElement('option');
+          option.value = po;
+          option.text = po;
+          poSelect.add(option);
+        });
+
+        const shipmentSelect = document.getElementById('shipmentIdSelect');
+        shipmentIDs.forEach(id => {
+          const option = document.createElement('option');
+          option.value = id;
+          option.text = id;
+          shipmentSelect.add(option);
+        });
+      } catch (error) {
+        console.error('Error fetching PO numbers or Shipment IDs:', error);
+        showNotification('Failed to load PO numbers or Shipment IDs', 'error');
+      }
+    });
+
+    async function scanBarcode() {
+      const poNumber = document.getElementById('poNumberSelect').value;
+      const shipmentId = document.getElementById('shipmentIdSelect').value;
+      const gtin = document.getElementById('gtin').value;
+      const sscc = document.getElementById('sscc').value;
+
+      if (!poNumber || !shipmentId || !gtin || !sscc) {
+        showNotification('Please fill out all fields', 'error');
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:8080/api/queryBarcode', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ shipment_id: shipmentId, po_number: poNumber, gtin, sscc })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          showNotification('Barcode scanned successfully');
+        } else {
+          showNotification(`Error: ${data.message}`, 'error');
+        }
+
+        // Reset inputs and focus after response
+        document.getElementById('gtin').value = '';
+        document.getElementById('sscc').value = '';
+        document.getElementById('gtin').focus();
+      } catch (error) {
+        console.error('Error scanning barcode:', error);
+        showNotification('Failed to scan barcode', 'error');
+
+        // Reset inputs and focus after error
+        document.getElementById('gtin').value = '';
+        document.getElementById('sscc').value = '';
+        document.getElementById('gtin').focus();
+      }
+    }
+
+    function showNotification(message, type = 'success') {
+      const notification = document.createElement('div');
+      notification.className = `toast ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.remove();
+      }, 3000); // Remove the notification after 3 seconds
+    }
+
+    function goBackToDashboard() {
+      window.location.href = 'dashboard.html';
+    }
+  </script>
+</body>
+</html>
