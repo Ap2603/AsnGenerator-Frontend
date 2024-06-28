@@ -22,6 +22,9 @@
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       width: 300px;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     .back-button {
       position: absolute;
@@ -35,6 +38,7 @@
       border: 1px solid #ccc;
       border-radius: 5px;
       font-size: 16px;
+      box-sizing: border-box;
     }
     button {
       background: #007bff;
@@ -45,10 +49,10 @@
       background: #0056b3;
     }
     .toast {
-      position: fixed;
-      top: 50%;
+      position: absolute;
+      top: 10px;
       left: 50%;
-      transform: translate(-50%, -50%);
+      transform: translateX(-50%);
       background-color: #fff;
       border-radius: 5px;
       padding: 10px;

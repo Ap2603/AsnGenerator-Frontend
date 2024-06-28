@@ -28,6 +28,18 @@
       top: 20px;
       left: 20px;
     }
+    .back-button button {
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    .back-button button:hover {
+      background: #0056b3;
+    }
     input, button {
       padding: 10px;
       margin: 10px 0;
@@ -35,6 +47,7 @@
       border: 1px solid #ccc;
       border-radius: 5px;
       font-size: 16px;
+      box-sizing: border-box;
     }
     button {
       background: #007bff;
@@ -46,19 +59,21 @@
     }
     .toast {
       position: fixed;
-      top: 50%;
+      top: 10px;
       left: 50%;
-      transform: translate(-50%, -50%);
+      transform: translateX(-50%);
       background-color: #fff;
       border-radius: 5px;
       padding: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
       z-index: 1000;
     }
+
     .toast.success {
       background-color: #c6efce;
       color: #2e865f;
     }
+
     .toast.error {
       background-color: #f7cac9;
       color: #e74c3c;

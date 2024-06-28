@@ -28,15 +28,27 @@
       top: 20px;
       left: 20px;
     }
-    input[type="file"], button {
+    .drop-zone {
+      border: 2px dashed #ccc;
+      border-radius: 5px;
+      padding: 20px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    .drop-zone.dragover {
+      border-color: #007bff;
+      background-color: #f0f8ff;
+    }
+    .drop-zone input {
+      display: none;
+    }
+    button {
       padding: 10px;
       margin: 10px 0;
       width: 100%;
       border: 1px solid #ccc;
       border-radius: 5px;
       font-size: 16px;
-    }
-    button {
       background: #007bff;
       color: white;
       cursor: pointer;
@@ -46,9 +58,9 @@
     }
     .toast {
       position: fixed;
-      top: 50%;
+      top: 10px;
       left: 50%;
-      transform: translate(-50%, -50%);
+      transform: translateX(-50%);
       background-color: #fff;
       border-radius: 5px;
       padding: 10px;
@@ -63,6 +75,15 @@
       background-color: #f7cac9;
       color: #e74c3c;
     }
+    #fileList {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      text-align: center;
+    }
+    #fileList li {
+      margin: 5px 0;
+    }
   </style>
 </head>
 <body>
@@ -71,23 +92,60 @@
   </div>
   <div class="container">
     <h2>Import PO</h2>
-    <input type="file" id="poFile" accept=".csv, .xlsx" multiple>
+    <div class="drop-zone" id="drop-zone">
+      <span>Drag & Drop files here or click to select files</span>
+      <input type="file" id="poFile" accept=".csv, .xlsx" multiple>
+    </div>
     <button onclick="importPO()">Import PO</button>
+    <ul id="fileList"></ul>
   </div>
   <script>
-    async function importPO() {
-      const fileInput = document.getElementById('poFile');
-      const files = fileInput.files;
+    const filesList = [];
 
-      if (files.length === 0) {
+    document.addEventListener('DOMContentLoaded', () => {
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('poFile');
+      const fileList = document.getElementById('fileList');
+
+      dropZone.addEventListener('click', () => fileInput.click());
+
+      dropZone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+
+      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+      dropZone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropZone.classList.remove('dragover');
+        addFiles(event.dataTransfer.files);
+      });
+
+      fileInput.addEventListener('change', () => {
+        addFiles(fileInput.files);
+      });
+
+      function addFiles(files) {
+        for (let i = 0; i < files.length; i++) {
+          filesList.push(files[i]);
+          const listItem = document.createElement('li');
+          listItem.textContent = files[i].name;
+          fileList.appendChild(listItem);
+        }
+      }
+    });
+
+    async function importPO() {
+      if (filesList.length === 0) {
         showNotification('Please select files to upload', 'error');
         return;
       }
 
       const formData = new FormData();
-      for (let i = 0; i < files.length; i++) {
-        formData.append('file', files[i]);
-      }
+      filesList.forEach((file, index) => {
+        formData.append(`file${index}`, file);
+      });
 
       try {
         const token = localStorage.getItem('token');
