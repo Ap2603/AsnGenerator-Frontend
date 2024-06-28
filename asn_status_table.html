@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ASN Status Table</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+      position: relative;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 1200px;
+      text-align: center;
+      overflow: auto;
+      max-height: 90vh;
+    }
+    .back-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background: #007bff;
+      color: white;
+    }
+    button {
+      padding: 10px;
+      margin: 10px 0;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="back-button">
+    <button onclick="goBack()">Back to View ASN Status</button>
+  </div>
+  <div class="container">
+    <h2 id="shipmentIdHeading">ASN Status Table for Shipment ID: </h2>
+    <table id="asnStatusTable">
+      <thead>
+        <tr>
+          <th>SSCC</th>
+          <th>Item Code</th>
+          <th>Case Pack Size</th>
+          <th>PO Number</th>
+          <th>Line Number</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const shipmentId = localStorage.getItem('selectedShipmentID');
+      if (!shipmentId) {
+        showNotification('No Shipment ID selected.', 'error');
+        return;
+      }
+      document.getElementById('shipmentIdHeading').textContent += shipmentId;
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:8080/api/viewASNStatus?shipmentId=${shipmentId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          if (response.status === 204) {
+            showNotification('No ASN entries found for the given shipment ID', 'error');
+            return;
+          }
+          throw new Error('Failed to fetch ASN status');
+        }
+
+        const asnStatus = await response.json();
+        const tableBody = document.getElementById('asnStatusTable').querySelector('tbody');
+        asnStatus.forEach(entry => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${entry.sscc}</td>
+            <td>${entry.item_code}</td>
+            <td>${entry.case_pack_size}</td>
+            <td>${entry.po_number}</td>
+            <td>${entry.line_number}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error fetching ASN status:', error);
+        showNotification('Failed to load ASN status', 'error');
+      }
+    });
+
+    function showNotification(message, type = 'success') {
+      const notification = document.createElement('div');
+      notification.className = `toast ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+    }
+
+    function goBack() {
+      window.location.href = 'view_asn_status.html';
+    }
+  </script>
+</body>
+</html>

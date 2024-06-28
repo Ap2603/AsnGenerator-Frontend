@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 let mainWindow;
-const backendIp = '192.168.1.78'; // Replace with the IP address of your backend server
+const backendIp = '192.168.1.73'; // Replace with the IP address of your backend server
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
@@ -32,7 +32,6 @@ async function createWindow() {
 }
 
 function loadPageBasedOnRole(role) {
-    console.log(role)
   if (role === 'admin') {
     mainWindow.loadFile('dashboard.html');
   } else {
@@ -165,3 +164,55 @@ ipcMain.handle('query-barcode', async (event, gtin, sscc, poNumber, shipmentId, 
 ipcMain.handle('load-page-based-on-role', (event, role) => {
   loadPageBasedOnRole(role);
 });
+
+ipcMain.handle('fetch-asn-status', async (event, shipmentId, token) => {
+  const fetch = await import('node-fetch').then(module => module.default);
+
+  try {
+    const response = await fetch(`http://${backendIp}:8080/api/viewASN?shipmentId=${shipmentId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!response.ok) {
+      if (response.status === 204) {
+        return { success: true, asnStatus: [] };
+      } else {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    }
+
+    const asnStatus = await response.json();
+    return { success: true, asnStatus };
+  } catch (error) {
+    console.error('Error fetching ASN status:', error);
+    return { success: false, message: error.message };
+  }
+});
+ipcMain.handle('add-shipment-id', async (event, shipmentId, token) => {
+  const fetch = await import('node-fetch').then(module => module.default);
+
+  try {
+    const response = await fetch(`http://${backendIp}:8080/api/addShipmentID`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ shipment_id: shipmentId })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return { success: true, result };
+  } catch (error) {
+    console.error('Error adding shipment ID:', error);
+    return { success: false, message: error.message };
+  }
+});
+
+
