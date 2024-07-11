@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 let mainWindow;
-const backendIp = '192.168.1.73'; // Replace with the IP address of your backend server
+const backendIp = '192.168.1.72'; // Replace with the IP address of your backend server
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
@@ -138,7 +138,7 @@ ipcMain.handle('fetch-shipment-ids', async (event, token) => {
   }
 });
 
-ipcMain.handle('query-barcode', async (event, gtin, sscc, poNumber, shipmentId, token) => {
+ipcMain.handle('query-barcode', async (event, gtin, sscc, poNumber, shipmentId, role, override, token) => {
   const fetch = await import('node-fetch').then(module => module.default);
 
   try {
@@ -148,7 +148,7 @@ ipcMain.handle('query-barcode', async (event, gtin, sscc, poNumber, shipmentId, 
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ gtin, sscc, poNumber, shipmentId })
+      body: JSON.stringify({ gtin, sscc, poNumber, shipmentId, role, override })
     });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -214,5 +214,3 @@ ipcMain.handle('add-shipment-id', async (event, shipmentId, token) => {
     return { success: false, message: error.message };
   }
 });
-
-

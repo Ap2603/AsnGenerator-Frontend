@@ -69,6 +69,42 @@
       background-color: #f7cac9;
       color: #e74c3c;
     }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgb(0,0,0);
+      background-color: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -83,11 +119,21 @@
     <input type="text" id="sscc" placeholder="SSCC" required>
     <button onclick="scanBarcode()">Submit</button>
   </div>
+
+  <div id="overrideModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <p>Not enough PCS in ItemsOrdered to fulfill this ASN entry. Do you want to override?</p>
+      <button onclick="confirmOverride(true)">Yes</button>
+      <button onclick="confirmOverride(false)">No</button>
+    </div>
+  </div>
+
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       try {
         const token = localStorage.getItem('token');
-        const role = localStorage.getItem('role'); // Assuming role is stored in localStorage
+        const role = localStorage.getItem('role');
         if (role === 'admin') {
           document.getElementById('backButton').style.display = 'block';
         }
@@ -135,7 +181,9 @@
       }
     });
 
-    async function scanBarcode() {
+    let currentRequest = null;
+
+    async function scanBarcode(override = false) {
       const poNumber = document.getElementById('poNumberSelect').value;
       const shipmentId = document.getElementById('shipmentIdSelect').value;
       const gtin = document.getElementById('gtin').value;
@@ -148,34 +196,54 @@
 
       try {
         const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
         const response = await fetch('http://localhost:8080/api/queryBarcode', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ shipment_id: shipmentId, po_number: poNumber, gtin, sscc })
+          body: JSON.stringify({ shipment_id: shipmentId, po_number: poNumber, gtin, sscc, role, override })
         });
 
         const data = await response.json();
         if (response.ok) {
           showNotification('Barcode scanned successfully');
+          clearInputs();
         } else {
-          showNotification(`Error: ${data.message}`, 'error');
+          if (data.allowOverride === "true" && !override) {
+            currentRequest = { shipmentId, poNumber, gtin, sscc, role };
+            showOverrideModal();
+          } else {
+            showNotification(`Error: ${data.message}`, 'error');
+          }
         }
-
-        // Reset inputs and focus after response
-        document.getElementById('gtin').value = '';
-        document.getElementById('sscc').value = '';
-        document.getElementById('gtin').focus();
       } catch (error) {
         console.error('Error scanning barcode:', error);
         showNotification('Failed to scan barcode', 'error');
+      }
+    }
 
-        // Reset inputs and focus after error
-        document.getElementById('gtin').value = '';
-        document.getElementById('sscc').value = '';
-        document.getElementById('gtin').focus();
+    function clearInputs() {
+      document.getElementById('gtin').value = '';
+      document.getElementById('sscc').value = '';
+      document.getElementById('gtin').focus();
+    }
+
+    function showOverrideModal() {
+      const modal = document.getElementById('overrideModal');
+      modal.style.display = "flex";
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('overrideModal');
+      modal.style.display = "none";
+    }
+
+    function confirmOverride(override) {
+      closeModal();
+      if (override && currentRequest) {
+        scanBarcode(true);
       }
     }
 
@@ -187,7 +255,7 @@
 
       setTimeout(() => {
         notification.remove();
-      }, 3000); // Remove the notification after 3 seconds
+      }, 3000);
     }
 
     function goBackToDashboard() {
