@@ -31,6 +31,18 @@
       top: 20px;
       left: 20px;
     }
+    .back-button button {
+      padding: 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .back-button button:hover {
+      background: #0056b3;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -47,7 +59,7 @@
       background: #007bff;
       color: white;
     }
-    button {
+    .remove-button {
       padding: 10px;
       margin: 10px 0;
       width: 100%;
@@ -58,8 +70,29 @@
       color: white;
       cursor: pointer;
     }
-    button:hover {
-      background: #0056b3;
+    .remove-button:hover {
+      background: #ff0000;
+    }
+    .toast {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #fff;
+      border-radius: 5px;
+      padding: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+    }
+
+    .toast.success {
+      background-color: #c6efce;
+      color: #2e865f;
+    }
+
+    .toast.error {
+      background-color: #f7cac9;
+      color: #e74c3c;
     }
   </style>
 </head>
@@ -77,6 +110,7 @@
           <th>Case Pack Size</th>
           <th>PO Number</th>
           <th>Line Number</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -84,6 +118,7 @@
     </table>
   </div>
   <script>
+    const backendIp = '192.168.0.237';
     document.addEventListener('DOMContentLoaded', async () => {
       const shipmentId = localStorage.getItem('selectedShipmentID');
       if (!shipmentId) {
@@ -93,7 +128,7 @@
       document.getElementById('shipmentIdHeading').textContent += shipmentId;
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:8080/api/viewASNStatus?shipmentId=${shipmentId}`, {
+        const response = await fetch(`http://${backendIp}:7000/api/viewASNStatus?shipmentId=${shipmentId}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -118,6 +153,7 @@
             <td>${entry.case_pack_size}</td>
             <td>${entry.po_number}</td>
             <td>${entry.line_number}</td>
+            <td><button class="remove-button" onclick="removeEntry(this, '${entry.sscc}', '${entry.po_number}', '${entry.item_code}', ${entry.line_number})">Remove</button></td>
           `;
           tableBody.appendChild(row);
         });
@@ -140,6 +176,33 @@
 
     function goBack() {
       window.location.href = 'view_asn_status.html';
+    }
+
+    async function removeEntry(button, sscc, poNumber, itemCode, lineNumber) {
+      const token = localStorage.getItem('token');
+      try {
+        const response = await fetch(`http://${backendIp}:7000/api/removeASNEntry`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ sscc, po_number: poNumber, item_code: itemCode, line_number: parseInt(lineNumber, 10) })
+        });
+
+        if (response.ok) {
+          showNotification('Entry removed successfully', 'success');
+          // Remove the row from the table
+          const row = button.parentElement.parentElement;
+          row.parentElement.removeChild(row);
+        } else {
+          const data = await response.json();
+          showNotification(`Error: ${data.message}`, 'error');
+        }
+      } catch (error) {
+        console.error('Error removing entry:', error);
+        showNotification('Failed to remove entry', 'error');
+      }
     }
   </script>
 </body>

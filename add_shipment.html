@@ -90,6 +90,8 @@
     <button onclick="addShipmentID()">Add Shipment ID</button>
   </div>
   <script>
+    const backendIp = '192.168.0.237';
+
     async function addShipmentID() {
       const shipmentID = document.getElementById('shipmentID').value;
 
@@ -100,7 +102,7 @@
 
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:8080/api/addShipmentID', {
+        const response = await fetch(`http://${backendIp}:7000/api/addShipmentID`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

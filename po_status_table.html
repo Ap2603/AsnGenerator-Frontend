@@ -87,6 +87,7 @@
     </table>
   </div>
   <script>
+    const backendIp = '192.168.0.237';
     document.addEventListener('DOMContentLoaded', async () => {
       const poNumber = localStorage.getItem('selectedPONumber');
       if (!poNumber) {
@@ -96,7 +97,7 @@
       document.getElementById('poNumberHeading').textContent += poNumber;
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:8080/api/viewPO?poNumber=${poNumber}`, {
+        const response = await fetch(`http://${backendIp}:7000/api/viewPO?poNumber=${poNumber}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`

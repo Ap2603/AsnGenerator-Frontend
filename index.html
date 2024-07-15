@@ -71,6 +71,7 @@
     <button id="loginButton">Login</button>
   </div>
   <script>
+    const backendIp = '192.168.0.237';
     async function login() {
       const usernameInput = document.getElementById('username');
       const passwordInput = document.getElementById('password');
@@ -88,7 +89,7 @@
         console.log("Attempting login");
         console.log(`Username: ${username}`);
         console.log(`Password: ${password}`);
-        const response = await fetch('http://localhost:8080/api/login', {
+        const response = await fetch(`http://${backendIp}:7000/api/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

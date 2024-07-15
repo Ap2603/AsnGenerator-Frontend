@@ -130,6 +130,7 @@
   </div>
 
   <script>
+    const backendIp = '192.168.0.237';
     document.addEventListener('DOMContentLoaded', async () => {
       try {
         const token = localStorage.getItem('token');
@@ -139,13 +140,13 @@
         }
 
         const [poResponse, shipmentResponse] = await Promise.all([
-          fetch('http://localhost:8080/api/getPONumbers', {
+          fetch(`http://${backendIp}:7000/api/getPONumbers`, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`
             }
           }),
-          fetch('http://localhost:8080/api/getShipmentIDs', {
+          fetch(`http://${backendIp}:7000/api/getShipmentIDs`, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`
@@ -197,7 +198,7 @@
       try {
         const token = localStorage.getItem('token');
         const role = localStorage.getItem('role');
-        const response = await fetch('http://localhost:8080/api/queryBarcode', {
+        const response = await fetch(`http://${backendIp}:7000/api/queryBarcode`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

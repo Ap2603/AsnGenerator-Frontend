@@ -100,6 +100,7 @@
     <ul id="fileList"></ul>
   </div>
   <script>
+    const backendIp = '192.168.0.237';
     const filesList = [];
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -144,12 +145,12 @@
 
       const formData = new FormData();
       filesList.forEach((file, index) => {
-        formData.append(`file${index}`, file);
+        formData.append('file', file); // Use 'file' as the key for all files
       });
 
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:8080/api/importPO', {
+        const response = await fetch(`http://${backendIp}:7000/api/importPO`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -177,7 +178,7 @@
 
       setTimeout(() => {
         notification.remove();
-      }, 3000); // Remove the notification after 3 seconds
+      }, 3000);
     }
 
     function goBack() {

@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 let mainWindow;
-const backendIp = '192.168.1.72'; // Replace with the IP address of your backend server
+const backendIp = '192.168.0.237'; // Replace with the IP address of your backend server
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
@@ -58,7 +58,7 @@ ipcMain.handle('download-asn', async (event, shipmentId, token) => {
 
   try {
     console.log(`Fetching ASN for shipment ID: ${shipmentId}`);
-    const response = await fetch(`http://${backendIp}:8080/api/exportASN?shipment_id=${shipmentId}`, {
+    const response = await fetch(`http://${backendIp}:7000/api/exportASN?shipment_id=${shipmentId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -100,7 +100,7 @@ ipcMain.handle('fetch-po-numbers', async (event, token) => {
   const fetch = await import('node-fetch').then(module => module.default);
 
   try {
-    const response = await fetch(`http://${backendIp}:8080/api/getPONumbers`, {
+    const response = await fetch(`http://${backendIp}:7000/api/getPONumbers`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -121,7 +121,7 @@ ipcMain.handle('fetch-shipment-ids', async (event, token) => {
   const fetch = await import('node-fetch').then(module => module.default);
 
   try {
-    const response = await fetch(`http://${backendIp}:8080/api/getShipmentIDs`, {
+    const response = await fetch(`http://${backendIp}:7000/api/getShipmentIDs`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -142,7 +142,7 @@ ipcMain.handle('query-barcode', async (event, gtin, sscc, poNumber, shipmentId, 
   const fetch = await import('node-fetch').then(module => module.default);
 
   try {
-    const response = await fetch(`http://${backendIp}:8080/api/queryBarcode`, {
+    const response = await fetch(`http://${backendIp}:7000/api/queryBarcode`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -169,7 +169,7 @@ ipcMain.handle('fetch-asn-status', async (event, shipmentId, token) => {
   const fetch = await import('node-fetch').then(module => module.default);
 
   try {
-    const response = await fetch(`http://${backendIp}:8080/api/viewASN?shipmentId=${shipmentId}`, {
+    const response = await fetch(`http://${backendIp}:7000/api/viewASN?shipmentId=${shipmentId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -190,11 +190,35 @@ ipcMain.handle('fetch-asn-status', async (event, shipmentId, token) => {
     return { success: false, message: error.message };
   }
 });
+
+ipcMain.handle('remove-asn-entry', async (event, sscc, poNumber, itemCode, lineNumber, token) => {
+  const fetch = await import('node-fetch').then(module => module.default);
+
+  try {
+    const response = await fetch(`http://${backendIp}:7000/api/removeASNEntry`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ sscc, po_number: poNumber, item_code: itemCode, line_number: lineNumber })
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    return { success: true, result };
+  } catch (error) {
+    console.error('Error removing ASN entry:', error);
+    return { success: false, message: error.message };
+  }
+});
+
 ipcMain.handle('add-shipment-id', async (event, shipmentId, token) => {
   const fetch = await import('node-fetch').then(module => module.default);
 
   try {
-    const response = await fetch(`http://${backendIp}:8080/api/addShipmentID`, {
+    const response = await fetch(`http://${backendIp}:7000/api/addShipmentID`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
