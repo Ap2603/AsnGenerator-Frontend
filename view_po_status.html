@@ -20,21 +20,42 @@
       padding: 20px;
       border-radius: 5px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      width: 300px;
+      width: 400px;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     .back-button {
       position: absolute;
       top: 20px;
       left: 20px;
     }
-    select, button {
+    .input-container {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .input-container input,
+    .input-container select {
+      margin: 5px;
+      padding: 10px;
+      width: calc(50% - 10px);
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    select,
+    input,
+    button {
       padding: 10px;
       margin: 10px 0;
       width: 100%;
       border: 1px solid #ccc;
       border-radius: 5px;
       font-size: 16px;
+      box-sizing: border-box;
     }
     button {
       background: #007bff;
@@ -55,12 +76,10 @@
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
       z-index: 1000;
     }
-
     .toast.success {
       background-color: #c6efce;
       color: #2e865f;
     }
-
     .toast.error {
       background-color: #f7cac9;
       color: #e74c3c;
@@ -73,15 +92,20 @@
   </div>
   <div class="container">
     <h2>View PO Status</h2>
-    <select id="poNumberSelect"></select>
+    <div class="input-container">
+      <input type="text" id="poSearch" placeholder="Search PO Number" oninput="filterPONumbers()">
+      <select id="poNumberSelect"></select>
+    </div>
     <button onclick="viewPOStatus()">View PO</button>
   </div>
   <script>
-    const backendIp = '192.168.0.237';
+    const backendIp = '192.168.10.5';
+    let poNumbers = [];
+
     document.addEventListener('DOMContentLoaded', async () => {
       try {
         const token = localStorage.getItem('token');
-        const role = localStorage.getItem('role'); // Assuming role is stored in localStorage
+        const role = localStorage.getItem('role');
         if (role === 'admin') {
           document.getElementById('backButton').style.display = 'block';
         }
@@ -97,7 +121,7 @@
           throw new Error('Failed to fetch PO numbers');
         }
 
-        const poNumbers = await response.json();
+        poNumbers = await response.json();
         const poSelect = document.getElementById('poNumberSelect');
         poNumbers.forEach(po => {
           const option = document.createElement('option');
@@ -110,6 +134,20 @@
         showNotification('Failed to load PO numbers', 'error');
       }
     });
+
+    function filterPONumbers() {
+      const query = document.getElementById('poSearch').value.toLowerCase();
+      const poSelect = document.getElementById('poNumberSelect');
+      poSelect.innerHTML = '';
+
+      const filteredPONumbers = poNumbers.filter(po => po.toLowerCase().includes(query));
+      filteredPONumbers.forEach(po => {
+        const option = document.createElement('option');
+        option.value = po;
+        option.text = po;
+        poSelect.add(option);
+      });
+    }
 
     async function viewPOStatus() {
       const poNumber = document.getElementById('poNumberSelect').value;
@@ -131,7 +169,7 @@
 
       setTimeout(() => {
         notification.remove();
-      }, 3000); // Remove the notification after 3 seconds
+      }, 3000);
     }
 
     function goBackToDashboard() {

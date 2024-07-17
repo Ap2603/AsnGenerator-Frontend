@@ -1,6 +1,6 @@
 {
   "name": "asngenerator-frontend",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "The Front End for the AsnGenerator application.",
   "main": "main.js",
   "scripts": {
@@ -12,12 +12,9 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "7zip-bin": "^5.0.5",
     "electron": "^31.1.0",
-    "electron-builder": "^24.0.0",
-    "7zip-bin": "^5.0.5"
-  },
-  "dependencies": {
-    "node-fetch": "^3.3.2"
+    "electron-builder": "^24.0.0"
   },
   "build": {
     "appId": "com.yourdomain.asngenerator",
@@ -27,8 +24,11 @@
     },
     "files": [
       "**/*",
-      "!node_modules",
-      "!dist"
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/.bin",
+      "!dist",
+      "!**/dist"
     ],
     "win": {
       "target": "nsis"
@@ -36,5 +36,8 @@
     "mac": {
       "target": "dmg"
     }
+  },
+  "dependencies": {
+    "electron-fetch": "^1.9.1"
   }
 }

@@ -82,51 +82,50 @@
     <button onclick="registerUser()">Register</button>
   </div>
   <script>
-    const backendIp = '192.168.0.237';
+    const backendIp = '192.168.10.5';
     async function registerUser() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      const token = localStorage.getItem('token');
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+  const token = localStorage.getItem('token');
 
-      if (!username || !password) {
-        showNotification('Please fill out all fields', 'error');
-        return;
-      }
+  if (!username || !password) {
+    showNotification('Please fill out all fields', 'error');
+    return;
+  }
 
-      try {
-        const response = await fetch(`http://${backendIp}:7000/api/register`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ username, password, role: 'user' })
-        });
+  try {
+    const response = await fetch(`http://${backendIp}:7000/api/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ username, password, role: 'user' })
+    });
 
-        const data = await response.json();
+    const data = await response.json();
 
-        if (response.ok) {
-          showNotification('User registered successfully');
-          window.location.href = 'dashboard.html';
-        } else {
-          showNotification(`Error: ${data.message}`, 'error');
-        }
-      } catch (error) {
-        console.error('Error registering user:', error);
-        showNotification('Failed to register user', 'error');
-      }
+    if (response.ok) {
+      showNotification('User registered successfully', 'success');
+    } else {
+      showNotification(`Error: ${data.message}`, 'error');
     }
+  } catch (error) {
+    console.error('Error registering user:', error);
+    showNotification('Failed to register user', 'error');
+  }
+}
 
-    function showNotification(message, type = 'success') {
-      const notification = document.createElement('div');
-      notification.className = `toast ${type}`;
-      notification.textContent = message;
-      document.body.appendChild(notification);
+function showNotification(message, type = 'success') {
+  const notification = document.createElement('div');
+  notification.className = `toast ${type}`;
+  notification.textContent = message;
+  document.body.appendChild(notification);
 
-      setTimeout(() => {
-        notification.remove();
-      }, 3000); // Remove the notification after 3 seconds
-    }
+  setTimeout(() => {
+    notification.remove();
+  }, 3000); // Remove the notification after 3 seconds
+}
 
     function goBack() {
       window.location.href = 'dashboard.html';

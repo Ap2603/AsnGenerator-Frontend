@@ -77,7 +77,7 @@
     <button onclick="exportASN()">Export ASN</button>
   </div>
   <script>
-    const backendIp = '192.168.0.237';
+    const backendIp = '192.168.10.5';
     document.addEventListener('DOMContentLoaded', async () => {
       try {
         const response = await fetch(`http://${backendIp}:7000/api/getShipmentIDs`, {

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Barcode Scanner</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
@@ -15,23 +16,45 @@
       background-color: #f0f0f0;
       position: relative;
     }
+
     .container {
       background: white;
       padding: 20px;
       border-radius: 5px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      width: 300px;
+      width: 400px;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
+
     .back-button {
       position: absolute;
       top: 20px;
       left: 20px;
     }
-    select, input, button {
+
+    .input-container {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .input-container input,
+    .input-container select {
+      margin: 5px;
+      padding: 10px;
+      width: calc(50% - 10px);
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    select,
+    input,
+    button {
       padding: 10px;
       margin: 10px 0;
       width: 100%;
@@ -40,14 +63,17 @@
       font-size: 16px;
       box-sizing: border-box;
     }
+
     button {
       background: #007bff;
       color: white;
       cursor: pointer;
     }
+
     button:hover {
       background: #0056b3;
     }
+
     .toast {
       position: absolute;
       top: 10px;
@@ -79,11 +105,12 @@
       width: 100%;
       height: 100%;
       overflow: auto;
-      background-color: rgb(0,0,0);
-      background-color: rgba(0,0,0,0.4);
+      background-color: rgb(0, 0, 0);
+      background-color: rgba(0, 0, 0, 0.4);
       justify-content: center;
       align-items: center;
     }
+
     .modal-content {
       background-color: #fefefe;
       margin: auto;
@@ -93,12 +120,14 @@
       max-width: 400px;
       text-align: center;
     }
+
     .close {
       color: #aaa;
       float: right;
       font-size: 28px;
       font-weight: bold;
     }
+
     .close:hover,
     .close:focus {
       color: black;
@@ -107,14 +136,21 @@
     }
   </style>
 </head>
+
 <body>
   <div class="back-button" id="backButton" style="display: none;">
     <button onclick="goBackToDashboard()">Back to Dashboard</button>
   </div>
   <div class="container">
     <h2>Barcode Scanner</h2>
-    <select id="poNumberSelect"></select>
-    <select id="shipmentIdSelect"></select>
+    <div class="input-container">
+      <input type="text" id="poSearch" placeholder="Search PO Number" oninput="filterPONumbers()">
+      <select id="poNumberSelect"></select>
+    </div>
+    <div class="input-container">
+      <input type="text" id="shipmentSearch" placeholder="Search Shipment ID" oninput="filterShipmentIDs()">
+      <select id="shipmentIdSelect"></select>
+    </div>
     <input type="text" id="gtin" placeholder="GTIN" required>
     <input type="text" id="sscc" placeholder="SSCC" required>
     <button onclick="scanBarcode()">Submit</button>
@@ -130,7 +166,10 @@
   </div>
 
   <script>
-    const backendIp = '192.168.0.237';
+    const backendIp = '192.168.10.5';
+    let poNumbers = [];
+    let shipmentIDs = [];
+
     document.addEventListener('DOMContentLoaded', async () => {
       try {
         const token = localStorage.getItem('token');
@@ -158,8 +197,8 @@
           throw new Error('Failed to fetch PO numbers or Shipment IDs');
         }
 
-        const poNumbers = await poResponse.json();
-        const shipmentIDs = await shipmentResponse.json();
+        poNumbers = await poResponse.json();
+        shipmentIDs = await shipmentResponse.json();
 
         const poSelect = document.getElementById('poNumberSelect');
         poNumbers.forEach(po => {
@@ -181,6 +220,34 @@
         showNotification('Failed to load PO numbers or Shipment IDs', 'error');
       }
     });
+
+    function filterPONumbers() {
+      const query = document.getElementById('poSearch').value.toLowerCase();
+      const poSelect = document.getElementById('poNumberSelect');
+      poSelect.innerHTML = '';
+
+      const filteredPONumbers = poNumbers.filter(po => po.toLowerCase().includes(query));
+      filteredPONumbers.forEach(po => {
+        const option = document.createElement('option');
+        option.value = po;
+        option.text = po;
+        poSelect.add(option);
+      });
+    }
+
+    function filterShipmentIDs() {
+      const query = document.getElementById('shipmentSearch').value.toLowerCase();
+      const shipmentSelect = document.getElementById('shipmentIdSelect');
+      shipmentSelect.innerHTML = '';
+
+      const filteredShipmentIDs = shipmentIDs.filter(id => id.toLowerCase().includes(query));
+      filteredShipmentIDs.forEach(id => {
+        const option = document.createElement('option');
+        option.value = id;
+        option.text = id;
+        shipmentSelect.add(option);
+      });
+    }
 
     let currentRequest = null;
 
@@ -216,7 +283,7 @@
             currentRequest = { shipmentId, poNumber, gtin, sscc, role };
             showOverrideModal();
           } else {
-            showNotification(`Error: ${data.message}`, 'error');
+            showNotification(`Error: ${data.message}. ${data.error}`, 'error');
           }
         }
       } catch (error) {
@@ -264,4 +331,5 @@
     }
   </script>
 </body>
+
 </html>

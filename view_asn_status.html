@@ -20,21 +20,42 @@
       padding: 20px;
       border-radius: 5px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      width: 300px;
+      width: 400px;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     .back-button {
       position: absolute;
       top: 20px;
       left: 20px;
     }
-    select, button {
+    .input-container {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .input-container input,
+    .input-container select {
+      margin: 5px;
+      padding: 10px;
+      width: calc(50% - 10px);
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    select,
+    input,
+    button {
       padding: 10px;
       margin: 10px 0;
       width: 100%;
       border: 1px solid #ccc;
       border-radius: 5px;
       font-size: 16px;
+      box-sizing: border-box;
     }
     button {
       background: #007bff;
@@ -55,12 +76,10 @@
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
       z-index: 1000;
     }
-
     .toast.success {
       background-color: #c6efce;
       color: #2e865f;
     }
-
     .toast.error {
       background-color: #f7cac9;
       color: #e74c3c;
@@ -73,11 +92,16 @@
   </div>
   <div class="container">
     <h2>View ASN Status</h2>
-    <select id="shipmentIdSelect"></select>
+    <div class="input-container">
+      <input type="text" id="shipmentSearch" placeholder="Search Shipment ID" oninput="filterShipmentIDs()">
+      <select id="shipmentIdSelect"></select>
+    </div>
     <button onclick="viewASNStatus()">View ASN</button>
   </div>
   <script>
-    const backendIp = '192.168.0.237';
+    const backendIp = '192.168.10.5';
+    let shipmentIDs = [];
+
     document.addEventListener('DOMContentLoaded', async () => {
       try {
         const token = localStorage.getItem('token');
@@ -97,7 +121,7 @@
           throw new Error('Failed to fetch shipment IDs');
         }
 
-        const shipmentIDs = await response.json();
+        shipmentIDs = await response.json();
         const shipmentSelect = document.getElementById('shipmentIdSelect');
         shipmentIDs.forEach(id => {
           const option = document.createElement('option');
@@ -110,6 +134,20 @@
         showNotification('Failed to load shipment IDs', 'error');
       }
     });
+
+    function filterShipmentIDs() {
+      const query = document.getElementById('shipmentSearch').value.toLowerCase();
+      const shipmentSelect = document.getElementById('shipmentIdSelect');
+      shipmentSelect.innerHTML = '';
+
+      const filteredShipmentIDs = shipmentIDs.filter(id => id.toLowerCase().includes(query));
+      filteredShipmentIDs.forEach(id => {
+        const option = document.createElement('option');
+        option.value = id;
+        option.text = id;
+        shipmentSelect.add(option);
+      });
+    }
 
     async function viewASNStatus() {
       const shipmentId = document.getElementById('shipmentIdSelect').value;

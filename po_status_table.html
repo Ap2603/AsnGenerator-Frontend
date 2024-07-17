@@ -31,6 +31,11 @@
       top: 20px;
       left: 20px;
     }
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -50,7 +55,6 @@
     button {
       padding: 10px;
       margin: 10px 0;
-      width: 100%;
       border: 1px solid #ccc;
       border-radius: 5px;
       font-size: 16px;
@@ -61,6 +65,27 @@
     button:hover {
       background: #0056b3;
     }
+    .toast {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #fff;
+      border-radius: 5px;
+      padding: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+    }
+
+    .toast.success {
+      background-color: #c6efce;
+      color: #2e865f;
+    }
+
+    .toast.error {
+      background-color: #f7cac9;
+      color: #e74c3c;
+    }
   </style>
 </head>
 <body>
@@ -69,6 +94,11 @@
   </div>
   <div class="container">
     <h2 id="poNumberHeading">PO Status Table for PO Number: </h2>
+    <div class="buttons">
+      <button onclick="fetchPOStatus()">Show All Entries</button>
+      <button onclick="fetchPOStatus(true)">Hide Finished Items</button>
+      <button onclick="fetchPOStatus(false, true)">Show Finished Items</button>
+    </div>
     <table id="poStatusTable">
       <thead>
         <tr>
@@ -87,17 +117,28 @@
     </table>
   </div>
   <script>
-    const backendIp = '192.168.0.237';
-    document.addEventListener('DOMContentLoaded', async () => {
+    const backendIp = '192.168.10.5';
+    document.addEventListener('DOMContentLoaded', () => {
       const poNumber = localStorage.getItem('selectedPONumber');
       if (!poNumber) {
         showNotification('No PO number selected.', 'error');
         return;
       }
       document.getElementById('poNumberHeading').textContent += poNumber;
+      fetchPOStatus();
+    });
+
+    async function fetchPOStatus(hideFinished = false, showFinished = false) {
+      const poNumber = localStorage.getItem('selectedPONumber');
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://${backendIp}:7000/api/viewPO?poNumber=${poNumber}`, {
+        let url = `http://${backendIp}:7000/api/viewPO?poNumber=${poNumber}`;
+        if (hideFinished) {
+          url += "&hideFinished=true";
+        } else if (showFinished) {
+          url += "&showFinished=true";
+        }
+        const response = await fetch(url, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -110,6 +151,7 @@
 
         const poStatus = await response.json();
         const tableBody = document.getElementById('poStatusTable').querySelector('tbody');
+        tableBody.innerHTML = ''; // Clear previous data
         poStatus.forEach(entry => {
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -128,7 +170,7 @@
         console.error('Error fetching PO status:', error);
         showNotification('Failed to load PO status', 'error');
       }
-    });
+    }
 
     function showNotification(message, type = 'success') {
       const notification = document.createElement('div');
