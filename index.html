@@ -51,12 +51,10 @@
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
       z-index: 1000;
     }
-
     .toast.success {
       background-color: #c6efce;
       color: #2e865f;
     }
-
     .toast.error {
       background-color: #f7cac9;
       color: #e74c3c;
@@ -86,9 +84,6 @@
 
       try {
         loginButton.disabled = true;
-        console.log("Attempting login");
-        console.log(`Username: ${username}`);
-        console.log(`Password: ${password}`);
         const response = await fetch(`http://${backendIp}:7000/api/login`, {
           method: 'POST',
           headers: {
@@ -97,16 +92,24 @@
           body: JSON.stringify({ username, password })
         });
 
-        const data = await response.json();
-
         if (response.ok) {
-          console.log('Login response data:', data); // Log the response data
+          const data = await response.json();
           localStorage.setItem('token', data.token);
           localStorage.setItem('role', data.role);
-          window.electronAPI.loadPageBasedOnRole(data.role);
+          if (data.role === 'admin') {
+            window.electronAPI.loadPageBasedOnRole(data.role);
+          } else {
+            window.location.href = 'select_shipments.html';
+          }
         } else {
-          console.log('Login failed');
-          showNotification('Invalid username or password', 'error');
+          const errorText = await response.text();
+          if (errorText === 'Incorrect password') {
+            showNotification('Incorrect password', 'error');
+          } else if (errorText === 'Invalid username') {
+            showNotification('Invalid username', 'error');
+          } else {
+            showNotification('Invalid username or password', 'error');
+          }
         }
       } catch (error) {
         console.error('Error logging in:', error);

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Add PO entries</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+      position: relative;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 1200px;
+      text-align: center;
+      overflow: auto;
+      max-height: 90vh;
+    }
+    .back-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background: #007bff;
+      color: white;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .remove-button {
+      background: #007bff;
+    }
+    .remove-button:hover {
+      background: #ff4d4d;
+    }
+    .toast {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #fff;
+      border-radius: 5px;
+      padding: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+    }
+
+    .toast.success {
+      background-color: #c6efce;
+      color: #2e865f;
+    }
+
+    .toast.error {
+      background-color: #f7cac9;
+      color: #e74c3c;
+    }
+  </style>
+</head>
+<body>
+  <div class="back-button">
+    <button onclick="goBack()">Back to Dashboard</button>
+  </div>
+  <div class="container">
+    <h2>Add PO entries</h2>
+    <table id="itemsOrderedTable">
+      <thead>
+        <tr>
+          <th>PO Number</th>
+          <th>Line Number</th>
+          <th>Item Number</th>
+          <th>Style</th>
+          <th>Colour/Size</th>
+          <th>Cost</th>
+          <th>Pcs</th>
+          <th>Total</th>
+          <th>Ex Fac Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="text" name="poNumber" required></td>
+          <td><input type="text" name="lineNumber" required></td>
+          <td><input type="text" name="itemNumber" required></td>
+          <td><input type="text" name="style"></td>
+          <td><input type="text" name="colourSize"></td>
+          <td><input type="text" name="cost"></td>
+          <td><input type="text" name="pcs" required></td>
+          <td><input type="text" name="total"></td>
+          <td><input type="text" name="exFacDate"></td>
+          <td><button class="remove-button" onclick="removeRow(this)">Remove</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <button onclick="addRow()">Add Row</button>
+    <button onclick="submitItemsOrdered()">Submit</button>
+  </div>
+  <script>
+    const backendIp = '192.168.10.5';
+
+    function addRow() {
+      const tableBody = document.getElementById('itemsOrderedTable').querySelector('tbody');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="text" name="poNumber" required></td>
+        <td><input type="text" name="lineNumber" required></td>
+        <td><input type="text" name="itemNumber" required></td>
+        <td><input type="text" name="style"></td>
+        <td><input type="text" name="colourSize"></td>
+        <td><input type="text" name="cost"></td>
+        <td><input type="text" name="pcs" required></td>
+        <td><input type="text" name="total"></td>
+        <td><input type="text" name="exFacDate"></td>
+        <td><button class="remove-button" onclick="removeRow(this)">Remove</button></td>
+      `;
+      tableBody.appendChild(row);
+    }
+
+    function removeRow(button) {
+      const row = button.parentElement.parentElement;
+      row.remove();
+    }
+
+    async function submitItemsOrdered() {
+      const rows = Array.from(document.querySelectorAll('#itemsOrderedTable tbody tr'));
+      const data = rows.map(row => {
+        const inputs = row.querySelectorAll('input');
+        return {
+          poNumber: inputs[0].value,
+          lineNumber: parseInt(inputs[1].value, 10),
+          itemNumber: inputs[2].value,
+          style: inputs[3].value,
+          colourSize: inputs[4].value,
+          cost: inputs[5].value,
+          pcs: parseInt(inputs[6].value, 10),
+          total: inputs[7].value,
+          exFacDate: inputs[8].value,
+        };
+      });
+
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://${backendIp}:7000/api/addPOentries`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          showNotification('Items added successfully', 'success');
+        } else {
+          showNotification(`Error: ${result.message}`, 'error');
+        }
+      } catch (error) {
+        console.error('Error adding items:', error);
+        showNotification('Failed to add items', 'error');
+      }
+    }
+
+    function showNotification(message, type = 'success') {
+      const notification = document.createElement('div');
+      notification.className = `toast ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.remove();
+      }, 3000); // Remove the notification after 3 seconds
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+  </script>
+</body>
+</html>

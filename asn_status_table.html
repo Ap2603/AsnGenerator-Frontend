@@ -105,6 +105,7 @@
     <table id="asnStatusTable">
       <thead>
         <tr>
+          <th>#</th> <!-- New column for row numbers -->
           <th>SSCC</th>
           <th>Item Code</th>
           <th>Case Pack Size</th>
@@ -145,9 +146,10 @@
 
         const asnStatus = await response.json();
         const tableBody = document.getElementById('asnStatusTable').querySelector('tbody');
-        asnStatus.forEach(entry => {
+        asnStatus.forEach((entry, index) => { // Use index to add row numbers
           const row = document.createElement('tr');
           row.innerHTML = `
+            <td>${index + 1}</td> <!-- Display row number -->
             <td>${entry.sscc}</td>
             <td>${entry.item_code}</td>
             <td>${entry.case_pack_size}</td>

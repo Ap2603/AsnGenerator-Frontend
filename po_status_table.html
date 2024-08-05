@@ -98,6 +98,7 @@
       <button onclick="fetchPOStatus()">Show All Entries</button>
       <button onclick="fetchPOStatus(true)">Hide Finished Items</button>
       <button onclick="fetchPOStatus(false, true)">Show Finished Items</button>
+      <button onclick="exportPO()">Export PO</button>
     </div>
     <table id="poStatusTable">
       <thead>
@@ -169,6 +170,36 @@
       } catch (error) {
         console.error('Error fetching PO status:', error);
         showNotification('Failed to load PO status', 'error');
+      }
+    }
+
+    async function exportPO() {
+      const poNumber = localStorage.getItem('selectedPONumber');
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://${backendIp}:7000/api/exportPO?poNumber=${poNumber}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to export PO');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `PO_${poNumber}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Error exporting PO:', error);
+        showNotification('Failed to export PO', 'error');
       }
     }
 
